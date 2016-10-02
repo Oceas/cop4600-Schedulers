@@ -5,11 +5,11 @@
  */
 package com.getcodesmart;
 
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class scheduler {
@@ -35,8 +35,7 @@ public class scheduler {
         setFileName("processes.in");
         setFilePath(getCurrentDirectory() + getFileName());
         processInputFile(getFilePath());
-
-
+        executeScheduler();
     }
 
     private void processInputFile(String filePath){
@@ -87,6 +86,38 @@ public class scheduler {
                 System.out.println("This is the end of the file");
                 break;
         }
+    }
+
+    private void executeScheduler(){
+        sortByArrivalTime();
+        switch(getSchedulerType()){
+            case "fcfs":
+                executeFCFS();
+                break;
+            case "sjf":
+                executeSJF();
+                break;
+            case "rr":
+                executeRR();
+                break;
+        }
+    }
+
+    private void executeFCFS(){
+        System.out.println("Executing FCFS");
+
+    }
+
+    private void executeSJF(){
+
+    }
+
+    private void executeRR(){
+
+    }
+
+    private void sortByArrivalTime(){
+        Collections.sort(processes, new ProcessComparer());
     }
 
     public void addProcess(process newProcess){
