@@ -25,6 +25,7 @@ public class scheduler {
     private int timeBlock;
     private String schedulerType;
     private int timeQuantum;
+    private int arrivalTimeIndex = 0;
 
     public static void main(String[] args) {
         scheduler scheduler = new scheduler();
@@ -90,8 +91,11 @@ public class scheduler {
 
     private void executeScheduler(){
         sortByArrivalTime();
+
+        System.out.println(getProcessCount() + " processes");
         switch(getSchedulerType()){
             case "fcfs":
+                System.out.println("Using First-Come First-Served\n");
                 executeFCFS();
                 break;
             case "sjf":
@@ -105,6 +109,9 @@ public class scheduler {
 
     private void executeFCFS(){
         System.out.println("Executing FCFS");
+        for(int time = 0; time < getTimeBlock(); time++){
+            processArrivalTime(time);
+        }
 
     }
 
@@ -114,6 +121,16 @@ public class scheduler {
 
     private void executeRR(){
 
+    }
+
+    private void processArrivalTime(int time){
+        process nextProcess = processes.get(arrivalTimeIndex);
+        if(time == nextProcess.getArrivalTime()){
+            System.out.println("Time " + time + ": " + nextProcess.getName() + " arrived");
+            if(arrivalTimeIndex < getProcessCount() - 1){
+                arrivalTimeIndex++;
+            }
+        }
     }
 
     private void sortByArrivalTime(){
