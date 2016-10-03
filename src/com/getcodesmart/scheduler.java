@@ -25,7 +25,12 @@ public class scheduler {
     private int timeBlock;
     private String schedulerType;
     private int timeQuantum;
+
     private int arrivalTimeIndex = 0;
+    private int fcfsProcessCounter = 0;
+    private int nextAvailableTime;
+    private boolean fcfsOnLastProcess = false;
+    private int idleStartTime = 0;
 
     public static void main(String[] args) {
         scheduler scheduler = new scheduler();
@@ -91,6 +96,7 @@ public class scheduler {
 
     private void executeScheduler(){
         sortByArrivalTime();
+        calculateIdleStartTime();
 
         System.out.println(getProcessCount() + " processes");
         switch(getSchedulerType()){
@@ -105,12 +111,30 @@ public class scheduler {
                 executeRR();
                 break;
         }
+
+        printWaitAndTurnTimes();
     }
 
     private void executeFCFS(){
         System.out.println("Executing FCFS");
-        for(int time = 0; time < getTimeBlock(); time++){
+        for(int time = 0; time <= getTimeBlock(); time++){
+            processCompletionTime(time);
             processArrivalTime(time);
+            processIdleAndCompletionTime(time);
+            process currentProcess = processes.get(fcfsProcessCounter);
+            if(time == nextAvailableTime){
+                System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getBurstTime() + ")");
+                currentProcess.setCompletionTime(time + currentProcess.getBurstTime());
+                if(fcfsOnLastProcess != true){
+                    nextAvailableTime = time + currentProcess.getBurstTime();
+                }
+                if(fcfsProcessCounter < getProcessCount() - 1){
+                    fcfsProcessCounter++;
+                    if(fcfsProcessCounter == getProcessCount() - 1){
+                        fcfsOnLastProcess = true;
+                    }
+                }
+            }
         }
 
     }
@@ -130,6 +154,34 @@ public class scheduler {
             if(arrivalTimeIndex < getProcessCount() - 1){
                 arrivalTimeIndex++;
             }
+        }
+    }
+
+    private void processCompletionTime(int time){
+        for (process process : processes){
+            if (process.getCompletionTime() == time && time != 0){
+                System.out.println("Time " + (time-1) + ": " + process.getName() + " finished");
+            }
+        }
+    }
+
+    private void calculateIdleStartTime(){
+        for(process process: processes){
+            idleStartTime += process.getBurstTime();
+        }
+    }
+
+    private void processIdleAndCompletionTime(int time){
+        if(time < getTimeBlock() && time >= idleStartTime){
+            System.out.println("Time "  + time + ":" + " Idle");
+        }else if (time == getTimeBlock()){
+            System.out.println("Finished at time " + time + "\n");
+        }
+    }
+
+    private void printWaitAndTurnTimes() {
+        for(process process : processes){
+            System.out.println(process.getName() + " wait " + process.waitTime() + " turnaround " + process.getTurnaroundTime());
         }
     }
 

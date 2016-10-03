@@ -61,4 +61,8 @@ public class process {
         return this.getCompletionTime() - this.getArrivalTime() - this.getBurstTime();
     }
 
+    public int getTurnaroundTime () {
+        return this.getCompletionTime() - this.getArrivalTime();
+    }
+
 }
