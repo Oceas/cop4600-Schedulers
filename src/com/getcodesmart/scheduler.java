@@ -102,7 +102,7 @@ public class scheduler {
 
     private void executeFCFS(){
         for(int time = 0; time <= getTimeBlock(); time++){
-            processCompletionTime(time);
+            processFCFSCompletionTime(time);
             processArrivalTime(time);
 
             if(processRunning()){
@@ -154,7 +154,7 @@ public class scheduler {
         }
     }
 
-    private void processCompletionTime(int time){
+    private void processFCFSCompletionTime(int time){
         for (process process : processes){
             if (process.isRunning() && process.getCompletionTime() == time){
                 process.setRunning(false);
