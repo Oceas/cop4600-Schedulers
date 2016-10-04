@@ -20,7 +20,7 @@ public class scheduler {
     private String filePath;
 
     //Variables for the schedulers execution
-    List<process> processes = new ArrayList<>();
+    List<CustomProcess> processes = new ArrayList<>();
     private int processCount;
     private int timeBlock;
     private String schedulerType;
@@ -74,7 +74,7 @@ public class scheduler {
                 String processName = line.split(" ")[2];
                 int processArrivalTime = Integer.parseInt(line.split(" ")[4]);
                 int processBurstTime = Integer.parseInt(line.split(" ")[6]);
-                addProcess(new process(processName,processArrivalTime,processBurstTime));
+                addProcess(new CustomProcess(processName,processArrivalTime,processBurstTime));
                 break;
             case "end":
                 break;
@@ -106,9 +106,9 @@ public class scheduler {
             processArrivalTime(time);
 
             if(processRunning()){
-                //Do not schedule a new process
+                //Do not schedule a new CustomProcess
             }else{
-                //Attempt to schedule a new process
+                //Attempt to schedule a new CustomProcess
                 fcfsScheduleNewProcess(time);
             }
             processIdleTime(time);
@@ -124,7 +124,7 @@ public class scheduler {
     }
 
     private void fcfsScheduleNewProcess(int time){
-        for(process process : processes){
+        for(CustomProcess process : processes){
             if(process.isArrived() && !process.isComplete()){
                 process.setRunning(true);
                 process.setCompletionTime(time + process.getBurstTime());
@@ -137,7 +137,7 @@ public class scheduler {
     private boolean processRunning(){
         boolean isProcessRunning = false;
 
-        for(process process : processes){
+        for(CustomProcess process : processes){
             if(process.isRunning()){
                 isProcessRunning = true;
             }
@@ -146,7 +146,7 @@ public class scheduler {
     }
 
     private void processArrivalTime(int time){
-        for(process process : processes){
+        for(CustomProcess process : processes){
             if(process.getArrivalTime() == time){
                 process.setArrived(true);
                 System.out.println("Time " + time + ": " + process.getName() + " arrived");
@@ -155,7 +155,7 @@ public class scheduler {
     }
 
     private void processFCFSCompletionTime(int time){
-        for (process process : processes){
+        for (CustomProcess process : processes){
             if (process.isRunning() && process.getCompletionTime() == time){
                 process.setRunning(false);
                 process.setComplete(true);
@@ -174,7 +174,7 @@ public class scheduler {
     }
 
     private void printWaitAndTurnTimes() {
-        for(process process : processes){
+        for(CustomProcess process : processes){
             System.out.println(process.getName() + " wait " + process.waitTime() + " turnaround " + process.getTurnaroundTime());
         }
     }
@@ -183,7 +183,7 @@ public class scheduler {
         Collections.sort(processes, new ProcessComparer());
     }
 
-    public void addProcess(process newProcess){
+    public void addProcess(CustomProcess newProcess){
         processes.add(newProcess);
     }
 

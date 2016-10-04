@@ -3,7 +3,7 @@ package com.getcodesmart;
 /**
  * Created by scottanderson on 10/2/16.
  */
-public class process {
+public class CustomProcess {
 
     private String name;
     private int arrivalTime;
@@ -14,7 +14,7 @@ public class process {
     private boolean running;
     private boolean complete;
 
-    public process(String name, int arrivalTime, int burstTime) {
+    public CustomProcess(String name, int arrivalTime, int burstTime) {
         this.setName(name);
         this.setArrivalTime(arrivalTime);
         this.setBurstTime(burstTime);
