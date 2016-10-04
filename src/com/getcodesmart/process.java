@@ -10,11 +10,17 @@ public class process {
     private int burstTime;
     private int timeLeft;
     private int completionTime;
+    private boolean arrived;
+    private boolean running;
+    private boolean complete;
 
     public process(String name, int arrivalTime, int burstTime) {
         this.setName(name);
         this.setArrivalTime(arrivalTime);
         this.setBurstTime(burstTime);
+        this.setComplete(false);
+        this.setRunning(false);
+        this.setArrived(false);
     }
 
     public String getName() {
@@ -65,4 +71,29 @@ public class process {
         return this.getCompletionTime() - this.getArrivalTime();
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+    }
+
+    public boolean isArrived() {
+        return arrived;
+    }
+
+    public void setArrived(boolean arrived) {
+        this.arrived = arrived;
+    }
 }
+
+

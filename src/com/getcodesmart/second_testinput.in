@@ -1,0 +1,6 @@
+processcount 5 # Read 5 processes # stuff
+runfor 50      # Run for 15 time units
+use fcfs         # Can be fcfs, sjf, or rr
+quantum 2      # Time quantum – only if using rr
+still need to fill out
+end
