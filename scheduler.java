@@ -20,18 +20,16 @@ public class scheduler {
     private String filePath;
 
     //Variables for the schedulers execution
-    List<process> processes = new ArrayList<>();
+    List<CustomProcess> processes = new ArrayList<>();
     private int processCount;
     private int timeBlock;
     private String schedulerType;
     private int timeQuantum;
 
     private int arrivalTimeIndex = 0;
-    private int fcfsProcessCounter = 0;
     private int sjfProcessCounter = 0;
     private int change = 0;
     private int nextAvailableTime;
-    private boolean fcfsOnLastProcess = false;
     private boolean sjfOnLastProcess = false;
     private int idleStartTime = 0;
 
@@ -88,7 +86,7 @@ public class scheduler {
                 String processName = line.split(" ")[2];
                 int processArrivalTime = Integer.parseInt(line.split(" ")[4]);
                 int processBurstTime = Integer.parseInt(line.split(" ")[6]);
-                addProcess(new process(processName,processArrivalTime,processBurstTime));
+                addProcess(new CustomProcess(processName,processArrivalTime,processBurstTime));
 
                 break;
             case "end":
@@ -119,68 +117,65 @@ public class scheduler {
     }
 
     private void executeFCFS(){
-        System.out.println("Executing FCFS");
         for(int time = 0; time <= getTimeBlock(); time++){
-            processCompletionTime(time);
+            processFCFSCompletionTime(time);
             processArrivalTime(time);
-            processIdleAndCompletionTime(time);
-            process currentProcess = processes.get(fcfsProcessCounter);
-            if(time == nextAvailableTime){
-                System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getBurstTime() + ")");
-                currentProcess.setCompletionTime(time + currentProcess.getBurstTime());
-                if(fcfsOnLastProcess != true){
-                    nextAvailableTime = time + currentProcess.getBurstTime();
-                }
-                if(fcfsProcessCounter < getProcessCount() - 1){
-                    fcfsProcessCounter++;
-                    if(fcfsProcessCounter == getProcessCount() - 1){
-                        fcfsOnLastProcess = true;
-                    }
-                }
-            }
-        }
 
+            if(processRunning()){
+                //Do not schedule a new CustomProcess
+            }else{
+                //Attempt to schedule a new CustomProcess
+                fcfsScheduleNewProcess(time);
+            }
+            processIdleTime(time);
+        }
     }
 
     private void executeSJF(){
         System.out.println("Executing SJF");
-        process currentProcess = processes.get(0);
-        System.out.println("Time " + 0 + ": " + currentProcess.getName()+ " selected (burst " + currentProcess.getTimeLeft() + ")");
+        CustomProcess currentProcess = processes.get(0);
         int j;
         for(int time = 0; time <= getTimeBlock(); time++){
             sortByArrivalTime();
-            processCompletionTime(time);
+            processFCFSCompletionTime(time);
+            if(currentProcess.getTimeLeft() == 0){
+                currentProcess.setRunning(false);
+                currentProcess.setComplete(true);
+            }
             processArrivalTime(time);
-            processIdleAndCompletionTime(time);
             sortByBurstTime();
+            if(sjfProcessCounter == processCount){
+                for(j = 0;j <= timeBlock - time; j++) {
+                    processIdleTime(time+j);
+                }
+                break;
+            }
+            //System.out.println(currentProcess.getBurstTime());
             for(j = 0; j < processCount; j++){
                 //System.out.println(j +") " + "Process in list " + processes.get(j).getName());
-                if(processes.get(j).getTimeLeft() >= 0 && processes.get(j).isReady() == true){
-                    if(processes.get(j).getName() == currentProcess.getName()){
-                        change = 1;
+                if(processes.get(j).getTimeLeft() > 0 && processes.get(j).isArrived() == true){
+                    if(processes.get(j).getName() == currentProcess.getName() && currentProcess.isRunning() == true)
+                        break;
+                    else {
+                        currentProcess.setRunning(false);
+                        currentProcess = processes.get(j);
+                        currentProcess.setRunning(true);
+                        //change = 1;
+                        System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getTimeLeft() + ")");
                         break;
                     }
-                    currentProcess = processes.get(j);
-                    System.out.println("Time " + time + ": " + currentProcess.getName()+ " selected (burst " + currentProcess.getTimeLeft() + ")");
-                    change = 1;
-                    //System.out.println(currentProcess.getName());
-                    break;
                 }
             }
-            if(change == 1){
-                change = 0;
-                currentProcess.setCompletionTime(time + currentProcess.getTimeLeft());
-                if(sjfOnLastProcess != true){
-                    nextAvailableTime = time + currentProcess.getTimeLeft();
-                }
-                if(sjfProcessCounter < getProcessCount() - 1){
-                    sjfProcessCounter++;
-                    if(sjfProcessCounter == getProcessCount() - 1){
-                        sjfOnLastProcess = true;
-                    }
-                }
+            //System.out.println(currentProcess.getName()+ " is working at time " + time);
+            currentProcess.setCompletionTime(time + currentProcess.getTimeLeft());
+            if(currentProcess.isRunning())
+                currentProcess.setTimeLeft(currentProcess.getTimeLeft()-1);
+            //System.out.println(currentProcess.getName()+ " has " + currentProcess.getTimeLeft() + " time left");
+            processIdleTime(time);
+
+            if(currentProcess.getTimeLeft() == 0){
+                sjfProcessCounter++;
             }
-            currentProcess.setTimeLeft(currentProcess.getTimeLeft()-1);
         }
     }
 
@@ -188,8 +183,29 @@ public class scheduler {
 
     }
 
+
+    private boolean processRunning(){
+        boolean isProcessRunning = false;
+
+        for(CustomProcess process : processes){
+            if(process.isRunning()){
+                isProcessRunning = true;
+            }
+        }
+        return isProcessRunning;
+    }
+
     private void processArrivalTime(int time){
-        process nextProcess = processes.get(arrivalTimeIndex);
+        for(CustomProcess process : processes){
+            if(process.getArrivalTime() == time){
+                process.setArrived(true);
+                System.out.println("Time " + time + ": " + process.getName() + " arrived");
+            }
+        }
+    }
+
+    private void SJFprocessArrivalTime(int time){
+        CustomProcess nextProcess = processes.get(arrivalTimeIndex);
         if(time == nextProcess.getArrivalTime()){
             System.out.println("Time " + time + ": " + nextProcess.getName() + " arrived");
             nextProcess.setReady(true);
@@ -199,17 +215,48 @@ public class scheduler {
         }
     }
 
+    private void fcfsScheduleNewProcess(int time){
+        for(CustomProcess process : processes){
+            if(process.isArrived() && !process.isComplete()){
+                process.setRunning(true);
+                process.setCompletionTime(time + process.getBurstTime());
+                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime()+")");
+                break;
+            }
+        }
+    }
+
+    private void processFCFSCompletionTime(int time){
+        for (CustomProcess process : processes){
+            if (process.isRunning() && process.getCompletionTime() == time){
+                process.setRunning(false);
+                process.setComplete(true);
+                System.out.println("Time " + (time) + ": " + process.getName() + " finished");
+            }
+        }
+    }
+
+    private void processIdleTime(int time){
+
+        boolean schedulerIdling = (!processRunning()) && (time != getTimeBlock());
+
+        if(schedulerIdling){
+            System.out.println("Time "  + time + ":" + " Idle");
+        }
+    }
+
     private void processCompletionTime(int time){
-        for (process process : processes){
+        for (CustomProcess process : processes){
             if (process.getCompletionTime() == time && time != 0){
                 System.out.println("Time " + (time) + ": " + process.getName() + " finished");
-                process.setReady(false);
+                process.setComplete(true);
+                process.setRunning(false);
             }
         }
     }
 
     private void calculateIdleStartTime(){
-        for(process process: processes){
+        for(CustomProcess process: processes){
             idleStartTime += process.getBurstTime();
         }
     }
@@ -223,7 +270,7 @@ public class scheduler {
     }
 
     private void printWaitAndTurnTimes() {
-        for(process process : processes){
+        for(CustomProcess process : processes){
             System.out.println(process.getName() + " wait " + process.waitTime() + " turnaround " + process.getTurnaroundTime());
         }
     }
@@ -236,18 +283,8 @@ public class scheduler {
         Collections.sort(processes, new ProcessTimeLeftComparer());
     }
 
-    public process nextProcess(int time, process process){
-        sortByBurstTime();
-        process nextProcess = processes.get(0);
-        //System.out.println(nextProcess.getName());
-        if(nextProcess.getTimeLeft() != 0 && nextProcess.isReady() == true)
-            return nextProcess;
-        else{
-            return process;
-        }
-    }
 
-    public void addProcess(process newProcess){
+    public void addProcess(CustomProcess newProcess){
         processes.add(newProcess);
     }
 
