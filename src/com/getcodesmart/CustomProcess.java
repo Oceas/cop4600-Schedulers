@@ -8,7 +8,6 @@ public class CustomProcess {
     private String name;
     private int arrivalTime;
     private int burstTime;
-    private int timeLeft;
     private int completionTime;
     private boolean arrived;
     private boolean running;
@@ -45,14 +44,6 @@ public class CustomProcess {
 
     public void setBurstTime(int burstTime) {
         this.burstTime = burstTime;
-    }
-
-    public int getTimeLeft() {
-        return timeLeft;
-    }
-
-    public void setTimeLeft(int timeLeft) {
-        this.timeLeft = timeLeft;
     }
 
     public int getCompletionTime() {

@@ -1,0 +1,37 @@
+private void executeRR(){
+        System.out.println("Executing RR");
+        for(int time = 0; time <= getTimeBlock(); time++){
+            processCompletionTime(time);
+            processArrivalTime(time);
+            processIdleAndCompletionTime(time);
+
+            process currentProcess = processes.get(rrProcessCounter);
+
+            while (!currentProcess.isReady()) {
+                rrProcessCounter = (rrProcessCounter + 1) % getProcessCount();
+                currentProcess = processes.get(rrProcessCounter);
+            }
+
+            if(time == nextAvailableTime){
+                System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getBurstTime() + ")");
+                if(currentProcess.getBurstTime() > getTimeQuantum()){
+                    currentProcess.setBurstTime(currentProcess.getBurstTime() - getTimeQuantum());
+                }else{
+                    currentProcess.setBurstTime(0);
+                }
+                currentProcess.setCompletionTime(time + currentProcess.getBurstTime());
+                if(rrOnLastProcess != true){
+                    if(currentProcess.getBurstTime() >= getTimeQuantum()){
+                        nextAvailableTime = time + getTimeQuantum();
+                    }else{
+                        nextAvailableTime = time + currentProcess.getBurstTime();
+                    }
+                }
+
+                rrProcessCounter = (rrProcessCounter + 1) % getProcessCount();
+                if(rrProcessCounter == getProcessCount() - 1){
+                    rrOnLastProcess = true;
+                }
+            }
+        }
+    }

@@ -25,6 +25,7 @@ public class scheduler {
     private int timeBlock;
     private String schedulerType;
     private int timeQuantum;
+    boolean procCompleteFlag = false;
 
     public static void main(String[] args) {
         scheduler scheduler = new scheduler();
@@ -93,6 +94,8 @@ public class scheduler {
                 executeSJF();
                 break;
             case "rr":
+                System.out.println("Using Round-Robin");
+                System.out.println("Quantum " + getTimeQuantum() + "\n");
                 executeRR();
                 break;
         }
@@ -120,7 +123,23 @@ public class scheduler {
     }
 
     private void executeRR(){
+        int quantumIndex = 0;
+        for(int time = 0; time <= getTimeBlock(); time++){
+            processRRCompletionTime(time);
+            processArrivalTime(time);
 
+            //Attempt to schedule a new CustomProcess
+            if(quantumIndex == 0){
+                rrScheduleNewProcess(time);
+            }
+
+            quantumIndex = (quantumIndex + 1) % getTimeQuantum();
+            if(procCompleteFlag){
+                quantumIndex = 0;
+                procCompleteFlag = false;
+            }
+            processIdleTime(time);
+        }
     }
 
     private void fcfsScheduleNewProcess(int time){
@@ -128,8 +147,39 @@ public class scheduler {
             if(process.isArrived() && !process.isComplete()){
                 process.setRunning(true);
                 process.setCompletionTime(time + process.getBurstTime());
-                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime()+")");
+                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime() + ")");
                 break;
+            }
+        }
+    }
+
+    private void processRRCompletionTime(int time){
+        for (CustomProcess process : processes){
+            if (process.isRunning() && process.getBurstTime() == 0){
+                process.setRunning(false);
+                process.setComplete(true);
+                procCompleteFlag = true;
+                System.out.println("Time " + time + ": " + process.getName() + " finished");
+            }
+        }
+    }
+
+    private void rrScheduleNewProcess(int time){
+        //int nextAvailableTime = time;
+        //int rrIndex = 0;
+        for(CustomProcess process: processes){
+        //CustomProcess process = processes.get(rrIndex);
+            if(process.isArrived() && !process.isComplete()){
+                process.setRunning(true);
+                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime()+")");
+
+                if(process.getBurstTime() > getTimeQuantum()){
+                    process.setBurstTime(process.getBurstTime() - getTimeQuantum());
+                }else{
+                    process.setBurstTime(0);
+                }
+                //process.setRunning(false);
+
             }
         }
     }
