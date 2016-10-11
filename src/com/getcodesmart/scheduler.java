@@ -140,23 +140,25 @@ public class scheduler {
     }
 
     private void executeSJF() throws IOException {
-        CustomProcess currentProcess = processes.get(0);
+        CustomProcess currentProcess = processes.get(0); //Initialize the very first process by order of arrival
         int j;
         for(int time = 0; time <= getTimeBlock(); time++){
-            sortByArrivalTime();
-            processFCFSCompletionTime(time);
+            sortByArrivalTime(); //Sort by arrival time first
+            processFCFSCompletionTime(time); //Check if the current process is complete
             if(currentProcess.getTimeLeft() == 0){
                 currentProcess.setRunning(false);
                 currentProcess.setComplete(true);
             }
-            processArrivalTime(time);
+            processArrivalTime(time); //Find out which process arrives at the current time
             sortByBurstTime();
+            //If there are no more processes to work with and there is still time left, make the system go idle until completion
             if(sjfProcessCounter == processCount){
                 for(j = 0;j <= timeBlock - time; j++) {
                     processIdleTime(time+j);
                 }
                 break;
             }
+            //The following compares the current running process with the process with the shortest burst time
             for(j = 0; j < processCount; j++){
                 if(processes.get(j).getTimeLeft() > 0 && processes.get(j).isArrived() == true){
                     if(processes.get(j).getName() == currentProcess.getName() && currentProcess.isRunning() == true)
@@ -171,6 +173,7 @@ public class scheduler {
                     }
                 }
             }
+            //Decrement the burst
             currentProcess.setCompletionTime(time + currentProcess.getTimeLeft());
             if(currentProcess.isRunning())
                 currentProcess.setTimeLeft(currentProcess.getTimeLeft()-1);
@@ -189,7 +192,7 @@ public class scheduler {
 
     private void executeRR() throws IOException {
         for(int time = 0; time < getTimeBlock(); time++){
-            processRRCoRRCompletmpletionTime(time);
+            processRRCompletmpletionTime(time);
             processArrivalTime(time);
 
             if((time % getTimeQuantum() == (0 + offset)) || isIdling()) {
@@ -210,7 +213,7 @@ public class scheduler {
         }
     }
 
-    private void processRRCoRRCompletmpletionTime(int time) throws IOException {
+    private void processRRCompletmpletionTime(int time) throws IOException {
         int processesComplete = 0;
 
         for (CustomProcess process : processes){
