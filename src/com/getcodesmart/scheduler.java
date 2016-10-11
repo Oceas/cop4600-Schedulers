@@ -131,7 +131,7 @@ public class scheduler {
 
     private void executeRR(){
         for(int time = 0; time < getTimeBlock(); time++){
-            processRRCompletionTime(time);
+            processRRCoRRCompletmpletionTime(time);
             processArrivalTime(time);
 
             if((time % getTimeQuantum() == (0 + offset)) || isIdling()) {
@@ -152,18 +152,26 @@ public class scheduler {
         }
     }
 
-    private void processRRCompletionTime(int time){
+    private void processRRCoRRCompletmpletionTime(int time){
+        int processesComplete = 0;
+
         for (CustomProcess process : processes){
             if (process.getBurstTimeLeft() == 0 && !process.isComplete()){
                 process.setComplete(true);
                 process.setCompletionTime(time);
                 System.out.println("Time " + time + ": " + process.getName() + " finished");
             }
+            if(process.isComplete()){
+                processesComplete++;
+            }
+        }
+
+        if(processesComplete == processes.size()){
+            setIdling(true);
         }
     }
 
     private void rrScheduleNewProcess(int time){
-        //System.out.println("I'm here at " + time + " o'clock");
         int waitedLongestIndex = 999999;
         int lastRan = time;
         for(CustomProcess process : processes) {
@@ -180,24 +188,13 @@ public class scheduler {
 
             processes.get(waitedLongestIndex).setLastRan(time);
             if (processes.get(waitedLongestIndex).getBurstTimeLeft() < getTimeQuantum()){
-                offset = getTimeQuantum() - processes.get(waitedLongestIndex).getBurstTimeLeft();
+                offset = processes.get(waitedLongestIndex).getBurstTimeLeft();
                 processes.get(waitedLongestIndex).setBurstTimeLeft(0);
-
-                //set idling to true here if no more processes left to process
             }
             else{
                 processes.get(waitedLongestIndex).setBurstTimeLeft(processes.get(waitedLongestIndex).getBurstTimeLeft() - getTimeQuantum());
             }
-        }/*else if(allProcDone){
-            for(CustomProcess process : processes){
-                if(!process.isComplete()){
-
-                }
-                else{
-                    allProcDone = true;
-                }
-            }
-        }*/else{
+        }else{
             setIdling(true);
             System.out.println("Time " + time + ": " + "Idle");
             offset = 0;
