@@ -189,9 +189,13 @@ public class scheduler {
 
     private void executeRR() throws IOException {
         for(int time = 0; time < getTimeBlock(); time++){
-            processRRCoRRCompletmpletionTime(time);
+            //Checks to see if processes have been completed and if so, outputs that they are
+            processRRCompleteOrCompletionTime(time);
+
+            //Checks if processes have arrived at the current time and if so, outputs that they have
             processArrivalTime(time);
 
+            //Schedule a new process if a process is not currently within a time quantum or if the system is idle
             if((time % getTimeQuantum() == (0 + offset)) || isIdling()) {
                 setIdling(false);
                 rrScheduleNewProcess(time);
@@ -210,28 +214,34 @@ public class scheduler {
         }
     }
 
-    private void processRRCoRRCompletmpletionTime(int time) throws IOException {
+    private void processRRCompleteOrCompletionTime(int time) throws IOException {
         int processesComplete = 0;
 
+        //Marks all processes that have been completed and the time they finished and outputs so
         for (CustomProcess process : processes){
             if (process.getBurstTimeLeft() == 0 && !process.isComplete()){
                 process.setComplete(true);
                 process.setCompletionTime(time);
                 outputStream.write("Time " + time + ": " + process.getName() + " finished" + "\n");
             }
+
+            //Counts the total number of currently completed processes
             if(process.isComplete()){
                 processesComplete++;
             }
         }
 
+        //Sets the CPU to be idle if there are no more processes to handle
         if(processesComplete == processes.size()){
             setIdling(true);
         }
     }
 
     private void rrScheduleNewProcess(int time) throws IOException {
-        int waitedLongestIndex = 999999;
+        int waitedLongestIndex = 999999;    //arbitrary large integer
         int lastRan = time;
+
+        //Finds the process that, if it has arrived and is not yet completed, hasn't been run in the longest time and sets it to be next to run
         for(CustomProcess process : processes) {
             if (process.isArrived() && !process.isComplete()) {
                 if (process.getLastRan() <= lastRan){
@@ -241,18 +251,19 @@ public class scheduler {
             }
         }
 
+        //Runs the next process for the duration of the time quantum
         if (waitedLongestIndex != 999999){
             outputStream.write("Time " + time + ": " + processes.get(waitedLongestIndex).getName() + " selected (burst " + processes.get(waitedLongestIndex).getBurstTimeLeft()+")" + "\n");
 
             processes.get(waitedLongestIndex).setLastRan(time);
-            if (processes.get(waitedLongestIndex).getBurstTimeLeft() < getTimeQuantum()){
+            if (processes.get(waitedLongestIndex).getBurstTimeLeft() < getTimeQuantum()){   //Handles cases where the process will finish before its time quantum is up
                 offset = processes.get(waitedLongestIndex).getBurstTimeLeft();
                 processes.get(waitedLongestIndex).setBurstTimeLeft(0);
             }
-            else{
+            else{   //Decrements a process' remaining burst time by the time quantum
                 processes.get(waitedLongestIndex).setBurstTimeLeft(processes.get(waitedLongestIndex).getBurstTimeLeft() - getTimeQuantum());
             }
-        }else{
+        }else{  //If there currently aren't any processes that've arrived to be scheduled, sets the CPU to be idle and outputs so
             setIdling(true);
             outputStream.write("Time " + time + ": " + "Idle" + "\n");
             offset = 0;
@@ -344,9 +355,7 @@ public class scheduler {
         this.processCount = processCount;
     }
 
-    public int getTimeBlock() {
-        return timeBlock;
-    }
+    public int getTimeBlock() { return timeBlock; }
 
     public void setTimeBlock(int timeBlock) {
         this.timeBlock = timeBlock;
