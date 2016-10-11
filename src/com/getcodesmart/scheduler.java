@@ -25,7 +25,9 @@ public class scheduler {
     private int timeBlock;
     private String schedulerType;
     private int timeQuantum;
-    boolean procCompleteFlag = false;
+    private boolean idling = false;
+    //boolean allProcDone = false;
+    int offset = 0;
 
     public static void main(String[] args) {
         scheduler scheduler = new scheduler();
@@ -36,6 +38,11 @@ public class scheduler {
         setFileName("processes.in");
         setFilePath(getCurrentDirectory() + getFileName());
         processInputFile(getFilePath());
+        for(int i = 0; i < getProcessCount(); i++){
+            CustomProcess currentProcess = processes.get(i);
+            currentProcess.setLastRan(0);
+            currentProcess.setIndexInList(i);
+        }
         executeScheduler();
     }
 
@@ -123,22 +130,14 @@ public class scheduler {
     }
 
     private void executeRR(){
-        int quantumIndex = 0;
-        for(int time = 0; time <= getTimeBlock(); time++){
+        for(int time = 0; time < getTimeBlock(); time++){
             processRRCompletionTime(time);
             processArrivalTime(time);
 
-            //Attempt to schedule a new CustomProcess
-            if(quantumIndex == 0){
+            if((time % getTimeQuantum() == (0 + offset)) || isIdling()) {
+                setIdling(false);
                 rrScheduleNewProcess(time);
             }
-
-            quantumIndex = (quantumIndex + 1) % getTimeQuantum();
-            if(procCompleteFlag){
-                quantumIndex = 0;
-                procCompleteFlag = false;
-            }
-            processIdleTime(time);
         }
     }
 
@@ -155,32 +154,53 @@ public class scheduler {
 
     private void processRRCompletionTime(int time){
         for (CustomProcess process : processes){
-            if (process.isRunning() && process.getBurstTime() == 0){
-                process.setRunning(false);
+            if (process.getBurstTimeLeft() == 0 && !process.isComplete()){
                 process.setComplete(true);
-                procCompleteFlag = true;
+                process.setCompletionTime(time);
                 System.out.println("Time " + time + ": " + process.getName() + " finished");
             }
         }
     }
 
     private void rrScheduleNewProcess(int time){
-        //int nextAvailableTime = time;
-        //int rrIndex = 0;
-        for(CustomProcess process: processes){
-        //CustomProcess process = processes.get(rrIndex);
-            if(process.isArrived() && !process.isComplete()){
-                process.setRunning(true);
-                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime()+")");
-
-                if(process.getBurstTime() > getTimeQuantum()){
-                    process.setBurstTime(process.getBurstTime() - getTimeQuantum());
-                }else{
-                    process.setBurstTime(0);
+        //System.out.println("I'm here at " + time + " o'clock");
+        int waitedLongestIndex = 999999;
+        int lastRan = time;
+        for(CustomProcess process : processes) {
+            if (process.isArrived() && !process.isComplete()) {
+                if (process.getLastRan() <= lastRan){
+                    lastRan = process.getLastRan();
+                    waitedLongestIndex = process.getIndexInList();
                 }
-                //process.setRunning(false);
-
             }
+        }
+
+        if (waitedLongestIndex != 999999){
+            System.out.println("Time " + time + ": " + processes.get(waitedLongestIndex).getName() + " selected (burst " + processes.get(waitedLongestIndex).getBurstTimeLeft()+")");
+
+            processes.get(waitedLongestIndex).setLastRan(time);
+            if (processes.get(waitedLongestIndex).getBurstTimeLeft() < getTimeQuantum()){
+                offset = getTimeQuantum() - processes.get(waitedLongestIndex).getBurstTimeLeft();
+                processes.get(waitedLongestIndex).setBurstTimeLeft(0);
+
+                //set idling to true here if no more processes left to process
+            }
+            else{
+                processes.get(waitedLongestIndex).setBurstTimeLeft(processes.get(waitedLongestIndex).getBurstTimeLeft() - getTimeQuantum());
+            }
+        }/*else if(allProcDone){
+            for(CustomProcess process : processes){
+                if(!process.isComplete()){
+
+                }
+                else{
+                    allProcDone = true;
+                }
+            }
+        }*/else{
+            setIdling(true);
+            System.out.println("Time " + time + ": " + "Idle");
+            offset = 0;
         }
     }
 
@@ -230,7 +250,7 @@ public class scheduler {
     }
 
     private void sortByArrivalTime(){
-        Collections.sort(processes, new ProcessComparer());
+            Collections.sort(processes, new ProcessComparer());
     }
 
     public void addProcess(CustomProcess newProcess){
@@ -285,11 +305,11 @@ public class scheduler {
         this.schedulerType = schedulerType;
     }
 
-    public int getTimeQuantum() {
-        return timeQuantum;
-    }
+    public int getTimeQuantum() { return timeQuantum; }
 
-    public void setTimeQuantum(int timeQuantum) {
-        this.timeQuantum = timeQuantum;
-    }
+    public void setTimeQuantum(int timeQuantum) { this.timeQuantum = timeQuantum; }
+
+    public boolean isIdling() { return idling; }
+
+    public void setIdling(boolean idling) { this.idling = idling; }
 }

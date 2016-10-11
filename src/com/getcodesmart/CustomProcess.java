@@ -8,15 +8,19 @@ public class CustomProcess {
     private String name;
     private int arrivalTime;
     private int burstTime;
+    private int burstTimeLeft;
     private int completionTime;
     private boolean arrived;
     private boolean running;
     private boolean complete;
+    private int lastRan;
+    private int indexInList;
 
     public CustomProcess(String name, int arrivalTime, int burstTime) {
         this.setName(name);
         this.setArrivalTime(arrivalTime);
         this.setBurstTime(burstTime);
+        this.setBurstTimeLeft(burstTime);
         this.setComplete(false);
         this.setRunning(false);
         this.setArrived(false);
@@ -84,6 +88,22 @@ public class CustomProcess {
 
     public void setArrived(boolean arrived) {
         this.arrived = arrived;
+    }
+
+    public int getLastRan() { return lastRan; }
+
+    public void setLastRan(int lastRan) { this.lastRan = lastRan; }
+
+    public int getIndexInList() { return indexInList; }
+
+    public void setIndexInList(int indexInList) { this.indexInList = indexInList; }
+
+    public int getBurstTimeLeft() {
+        return burstTimeLeft;
+    }
+
+    public void setBurstTimeLeft(int burstTimeLeft) {
+        this.burstTimeLeft = burstTimeLeft;
     }
 }
 
