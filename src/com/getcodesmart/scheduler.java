@@ -26,8 +26,11 @@ public class scheduler {
     private String schedulerType;
     private int timeQuantum;
     private boolean idling = false;
-    //boolean allProcDone = false;
     int offset = 0;
+    private int sjfProcessCounter = 0;
+
+
+
 
     public static void main(String[] args) {
         scheduler scheduler = new scheduler();
@@ -126,7 +129,52 @@ public class scheduler {
     }
 
     private void executeSJF(){
+        System.out.println("Executing SJF");
+        CustomProcess currentProcess = processes.get(0);
+        int j;
+        for(int time = 0; time <= getTimeBlock(); time++){
+            sortByArrivalTime();
+            processFCFSCompletionTime(time);
+            if(currentProcess.getTimeLeft() == 0){
+                currentProcess.setRunning(false);
+                currentProcess.setComplete(true);
+            }
+            processArrivalTime(time);
+            sortByBurstTime();
+            if(sjfProcessCounter == processCount){
+                for(j = 0;j <= timeBlock - time; j++) {
+                    processIdleTime(time+j);
+                }
+                break;
+            }
+            for(j = 0; j < processCount; j++){
+                if(processes.get(j).getTimeLeft() > 0 && processes.get(j).isArrived() == true){
+                    if(processes.get(j).getName() == currentProcess.getName() && currentProcess.isRunning() == true)
+                        break;
+                    else {
+                        currentProcess.setRunning(false);
+                        currentProcess = processes.get(j);
+                        currentProcess.setRunning(true);
+                        //change = 1;
+                        System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getTimeLeft() + ")");
+                        break;
+                    }
+                }
+            }
+            currentProcess.setCompletionTime(time + currentProcess.getTimeLeft());
+            if(currentProcess.isRunning())
+                currentProcess.setTimeLeft(currentProcess.getTimeLeft()-1);
+            processIdleTime(time);
 
+            if(currentProcess.getTimeLeft() == 0){
+                sjfProcessCounter++;
+            }
+        }
+
+    }
+
+    private void sortByBurstTime() {
+        Collections.sort(processes, new ProcessTimeLeftComparer());
     }
 
     private void executeRR(){

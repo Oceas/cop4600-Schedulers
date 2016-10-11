@@ -15,6 +15,7 @@ public class CustomProcess {
     private boolean complete;
     private int lastRan;
     private int indexInList;
+    private int timeLeft;
 
     public CustomProcess(String name, int arrivalTime, int burstTime) {
         this.setName(name);
@@ -24,6 +25,8 @@ public class CustomProcess {
         this.setComplete(false);
         this.setRunning(false);
         this.setArrived(false);
+        this.timeLeft = this.getBurstTime();
+
     }
 
     public String getName() {
@@ -104,6 +107,14 @@ public class CustomProcess {
 
     public void setBurstTimeLeft(int burstTimeLeft) {
         this.burstTimeLeft = burstTimeLeft;
+    }
+
+    public int getTimeLeft() {
+        return timeLeft;
+    }
+
+    public void setTimeLeft(int timeLeft) {
+        this.timeLeft = timeLeft;
     }
 }
 
