@@ -5,6 +5,7 @@
  */
 package com.getcodesmart;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -29,18 +30,23 @@ public class scheduler {
     int offset = 0;
     private int sjfProcessCounter = 0;
 
+    FileWriter outputStream = null;
 
-
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         scheduler scheduler = new scheduler();
         scheduler.initialize();
     }
 
-    public void initialize(){
+    public void initialize() throws IOException {
         setFileName("processes.in");
         setFilePath(getCurrentDirectory() + getFileName());
+
+        outputStream = new FileWriter("processes.out");
+
         processInputFile(getFilePath());
+
+
+
         for(int i = 0; i < getProcessCount(); i++){
             CustomProcess currentProcess = processes.get(i);
             currentProcess.setLastRan(0);
@@ -92,28 +98,33 @@ public class scheduler {
         }
     }
 
-    private void executeScheduler(){
-        System.out.println(getProcessCount() + " processes");
+    private void executeScheduler() throws IOException {
+        outputStream.write(getProcessCount() + " processes" + "\n");
         switch(getSchedulerType()){
             case "fcfs":
                 sortByArrivalTime();
-                System.out.println("Using First-Come First-Served\n");
+                outputStream.write("Using First-Come First-Served\n\n");
                 executeFCFS();
                 break;
             case "sjf":
+                outputStream.write("Executing SJF" + "\n\n");
                 executeSJF();
                 break;
             case "rr":
-                System.out.println("Using Round-Robin");
-                System.out.println("Quantum " + getTimeQuantum() + "\n");
+                outputStream.write("Using Round-Robin" + "\n");
+                outputStream.write("Quantum " + getTimeQuantum() + "\n\n");
                 executeRR();
                 break;
         }
-        System.out.println("Finished at time " + getTimeBlock() + "\n");
+        outputStream.write("Finished at time " + getTimeBlock() + "\n\n");
         printWaitAndTurnTimes();
+
+        if (outputStream != null) {
+            outputStream.close();
+        }
     }
 
-    private void executeFCFS(){
+    private void executeFCFS() throws IOException {
         for(int time = 0; time <= getTimeBlock(); time++){
             processFCFSCompletionTime(time);
             processArrivalTime(time);
@@ -128,8 +139,7 @@ public class scheduler {
         }
     }
 
-    private void executeSJF(){
-        System.out.println("Executing SJF");
+    private void executeSJF() throws IOException {
         CustomProcess currentProcess = processes.get(0);
         int j;
         for(int time = 0; time <= getTimeBlock(); time++){
@@ -156,7 +166,7 @@ public class scheduler {
                         currentProcess = processes.get(j);
                         currentProcess.setRunning(true);
                         //change = 1;
-                        System.out.println("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getTimeLeft() + ")");
+                        outputStream.write("Time " + time + ": " + currentProcess.getName() + " selected (burst " + currentProcess.getTimeLeft() + ")" + "\n");
                         break;
                     }
                 }
@@ -177,7 +187,7 @@ public class scheduler {
         Collections.sort(processes, new ProcessTimeLeftComparer());
     }
 
-    private void executeRR(){
+    private void executeRR() throws IOException {
         for(int time = 0; time < getTimeBlock(); time++){
             processRRCoRRCompletmpletionTime(time);
             processArrivalTime(time);
@@ -189,25 +199,25 @@ public class scheduler {
         }
     }
 
-    private void fcfsScheduleNewProcess(int time){
+    private void fcfsScheduleNewProcess(int time) throws IOException {
         for(CustomProcess process : processes){
             if(process.isArrived() && !process.isComplete()){
                 process.setRunning(true);
                 process.setCompletionTime(time + process.getBurstTime());
-                System.out.println("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime() + ")");
+                outputStream.write("Time " + time + ": " + process.getName() + " selected (burst " + process.getBurstTime() + ")" + "\n");
                 break;
             }
         }
     }
 
-    private void processRRCoRRCompletmpletionTime(int time){
+    private void processRRCoRRCompletmpletionTime(int time) throws IOException {
         int processesComplete = 0;
 
         for (CustomProcess process : processes){
             if (process.getBurstTimeLeft() == 0 && !process.isComplete()){
                 process.setComplete(true);
                 process.setCompletionTime(time);
-                System.out.println("Time " + time + ": " + process.getName() + " finished");
+                outputStream.write("Time " + time + ": " + process.getName() + " finished" + "\n");
             }
             if(process.isComplete()){
                 processesComplete++;
@@ -219,7 +229,7 @@ public class scheduler {
         }
     }
 
-    private void rrScheduleNewProcess(int time){
+    private void rrScheduleNewProcess(int time) throws IOException {
         int waitedLongestIndex = 999999;
         int lastRan = time;
         for(CustomProcess process : processes) {
@@ -232,7 +242,7 @@ public class scheduler {
         }
 
         if (waitedLongestIndex != 999999){
-            System.out.println("Time " + time + ": " + processes.get(waitedLongestIndex).getName() + " selected (burst " + processes.get(waitedLongestIndex).getBurstTimeLeft()+")");
+            outputStream.write("Time " + time + ": " + processes.get(waitedLongestIndex).getName() + " selected (burst " + processes.get(waitedLongestIndex).getBurstTimeLeft()+")" + "\n");
 
             processes.get(waitedLongestIndex).setLastRan(time);
             if (processes.get(waitedLongestIndex).getBurstTimeLeft() < getTimeQuantum()){
@@ -244,7 +254,7 @@ public class scheduler {
             }
         }else{
             setIdling(true);
-            System.out.println("Time " + time + ": " + "Idle");
+            outputStream.write("Time " + time + ": " + "Idle" + "\n");
             offset = 0;
         }
     }
@@ -260,37 +270,37 @@ public class scheduler {
         return isProcessRunning;
     }
 
-    private void processArrivalTime(int time){
+    private void processArrivalTime(int time) throws IOException {
         for(CustomProcess process : processes){
             if(process.getArrivalTime() == time){
                 process.setArrived(true);
-                System.out.println("Time " + time + ": " + process.getName() + " arrived");
+                outputStream.write("Time " + time + ": " + process.getName() + " arrived" + "\n");
             }
         }
     }
 
-    private void processFCFSCompletionTime(int time){
+    private void processFCFSCompletionTime(int time) throws IOException {
         for (CustomProcess process : processes){
             if (process.isRunning() && process.getCompletionTime() == time){
                 process.setRunning(false);
                 process.setComplete(true);
-                System.out.println("Time " + (time) + ": " + process.getName() + " finished");
+                outputStream.write("Time " + (time) + ": " + process.getName() + " finished" + "\n");
             }
         }
     }
 
-    private void processIdleTime(int time){
+    private void processIdleTime(int time) throws IOException {
 
         boolean schedulerIdling = (!processRunning()) && (time != getTimeBlock());
 
         if(schedulerIdling){
-            System.out.println("Time "  + time + ":" + " Idle");
+            outputStream.write("Time "  + time + ":" + " Idle" + "\n");
         }
     }
 
-    private void printWaitAndTurnTimes() {
+    private void printWaitAndTurnTimes() throws IOException {
         for(CustomProcess process : processes){
-            System.out.println(process.getName() + " wait " + process.waitTime() + " turnaround " + process.getTurnaroundTime());
+            outputStream.write(process.getName() + " wait " + process.waitTime() + " turnaround " + process.getTurnaroundTime() + "\n");
         }
     }
 
