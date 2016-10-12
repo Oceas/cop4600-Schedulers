@@ -1,4 +1,6 @@
-package com.getcodesmart;
+package com.getcodesmart.Comparers;
+
+import com.getcodesmart.CustomProcess;
 
 import java.util.Comparator;
 
