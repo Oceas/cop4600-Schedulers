@@ -122,6 +122,7 @@ public class scheduler {
         if (outputStream != null) {
             outputStream.close();
         }
+        System.out.printf("Scheduler Complete and results saved to processes.out");
     }
 
     private void executeFCFS() throws IOException {
